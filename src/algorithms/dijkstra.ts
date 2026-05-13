@@ -1,4 +1,4 @@
-import type { GameEdge, DijkstraStep } from '@/types';
+import type { GameEdge, DijkstraStep, DeliveryPackage } from '@/types';
 
 export interface DijkstraResult {
   distances: Map<string, number>;
@@ -19,14 +19,6 @@ function distSnapshot(distances: Map<string, number>): Record<string, number> {
   return out;
 }
 
-/**
- * Dijkstra's Shortest Path Algorithm
- *
- * Time Complexity:  O(V²) — linear scan for minimum each iteration
- * Space Complexity: O(V)
- *
- * Computes shortest distances from startNode to all other nodes.
- */
 export function dijkstra(
   nodes: string[],
   edges: EdgeInput[],
@@ -37,7 +29,6 @@ export function dijkstra(
   const visited = new Set<string>();
   const steps: DijkstraStep[] = [];
 
-  // Initialization: set all distances to ∞, source to 0
   for (const node of nodes) {
     distances.set(node, node === startNode ? 0 : Infinity);
     previous.set(node, null);
@@ -53,7 +44,6 @@ export function dijkstra(
   const unvisited = new Set<string>(nodes);
 
   while (unvisited.size > 0) {
-    // Pick the unvisited node with the smallest tentative distance (linear scan)
     let current: string | null = null;
     let minDist = Infinity;
 
@@ -62,13 +52,11 @@ export function dijkstra(
       if (d < minDist) { minDist = d; current = node; }
     });
 
-    // All remaining nodes are unreachable
     if (current === null || minDist === Infinity) break;
 
     unvisited.delete(current);
     visited.add(current);
 
-    // Relax all neighbours of current
     const relaxations: string[] = [];
 
     for (const edge of edges) {
@@ -105,9 +93,6 @@ export function dijkstra(
   return { distances, previous, steps };
 }
 
-/**
- * Reconstruct path from start → end using the previous map from dijkstra().
- */
 export function reconstructPath(
   previous: Map<string, string | null>,
   start: string,
@@ -125,9 +110,6 @@ export function reconstructPath(
   return path;
 }
 
-/**
- * Sum of edge weights along a given path.
- */
 export function pathDistance(path: string[], edges: EdgeInput[]): number {
   let total = 0;
   for (let i = 0; i < path.length - 1; i++) {
@@ -141,9 +123,6 @@ export function pathDistance(path: string[], edges: EdgeInput[]): number {
   return total;
 }
 
-/**
- * Run Dijkstra from every node and return a map of results.
- */
 export function allPairsShortestPaths(
   nodes: string[],
   edges: GameEdge[]
@@ -155,57 +134,101 @@ export function allPairsShortestPaths(
   return results;
 }
 
+function getPermutations(arr: string[]): string[][] {
+  if (arr.length <= 1) return [arr];
+  const result: string[][] = [];
+  
+  for (let i = 0; i < arr.length; i++) {
+    const current = arr[i];
+    const remaining = arr.slice(0, i).concat(arr.slice(i + 1));
+    const remainingPerms = getPermutations(remaining);
+    for (const perm of remainingPerms) {
+      result.push([current, ...perm]);
+    }
+  }
+  return result;
+}
+
 /**
- * Greedy Nearest-Neighbour heuristic for multi-stop delivery.
- *
- * Uses the APSP distance matrix to greedily pick the closest unvisited
- * destination at each step. O(n²) where n = number of destinations.
+ * Exact TSP Solver for multi-stop delivery.
+ * 
+ * Computes all permutations of destinations. Enforces the rule that 
+ * 'urgent' packages MUST be delivered before 'normal' packages.
  */
-export function greedyDeliveryOrder(
+export function optimalDeliveryOrder(
   warehouse: string,
-  destinations: string[],
-  allPairs: Map<string, DijkstraResult>
+  packages: DeliveryPackage[],
+  allPairs: Map<string, DijkstraResult>,
+  requireReturnToWarehouse: boolean = false
 ): { order: string[]; totalDistance: number; fullPath: string[] } {
-  const remaining = new Set<string>(destinations);
-  const order: string[] = [warehouse];
-  const fullPath: string[] = [warehouse];
-  let totalDistance = 0;
-  let current = warehouse;
+  
+  const urgentDests = packages.filter(p => p.priority === 'urgent').map(p => p.destination);
+  const allDests = packages.map(p => p.destination);
+  
+  const perms = getPermutations(allDests);
+  let bestDist = Infinity;
+  let bestOrder: string[] = [];
+  let bestFullPath: string[] = [];
 
-  while (remaining.size > 0) {
-    let nearest: string | null = null;
-    let nearestDist = Infinity;
+  for (const perm of perms) {
+    // CONSTRAINT CHECK: Ensure all urgent packages are visited first
+    let validPriority = true;
+    for (let i = 0; i < urgentDests.length; i++) {
+      if (!urgentDests.includes(perm[i])) {
+        validPriority = false;
+        break;
+      }
+    }
+    if (!validPriority) continue;
 
-    remaining.forEach((dest) => {
+    let currentDist = 0;
+    let current = warehouse;
+    const currentFullPath: string[] = [warehouse];
+    const currentOrder: string[] = [warehouse];
+    let validRoute = true;
+
+    // Route through the current permutation sequence
+    for (const dest of perm) {
       const dist = allPairs.get(current)?.distances.get(dest) ?? Infinity;
-      if (dist < nearestDist) { nearestDist = dist; nearest = dest; }
-    });
+      
+      if (dist === Infinity) { 
+        validRoute = false; 
+        break; 
+      }
 
-    if (nearest === null || nearestDist === Infinity) break;
-
-    const result = allPairs.get(current);
-    if (result) {
-      const subPath = reconstructPath(result.previous, current, nearest);
-      fullPath.push(...subPath.slice(1));
+      currentDist += dist;
+      const result = allPairs.get(current);
+      if (result) {
+        const subPath = reconstructPath(result.previous, current, dest);
+        currentFullPath.push(...subPath.slice(1));
+      }
+      
+      currentOrder.push(dest);
+      current = dest;
     }
 
-    totalDistance += nearestDist;
-    order.push(nearest);
-    remaining.delete(nearest);
-    current = nearest;
-  }
+    // Return to warehouse (set to false to match your game's rules)
+    if (requireReturnToWarehouse && validRoute) {
+      const returnDist = allPairs.get(current)?.distances.get(warehouse) ?? Infinity;
+      if (returnDist === Infinity) {
+        validRoute = false;
+      } else {
+        currentDist += returnDist;
+        const result = allPairs.get(current);
+        if (result) {
+          const returnPath = reconstructPath(result.previous, current, warehouse);
+          currentFullPath.push(...returnPath.slice(1));
+        }
+        currentOrder.push(warehouse);
+      }
+    }
 
-  // Return to warehouse
-  const returnResult = allPairs.get(current);
-  if (returnResult) {
-    const returnDist = returnResult.distances.get(warehouse) ?? Infinity;
-    if (returnDist < Infinity) {
-      const returnPath = reconstructPath(returnResult.previous, current, warehouse);
-      fullPath.push(...returnPath.slice(1));
-      totalDistance += returnDist;
-      order.push(warehouse);
+    if (validRoute && currentDist < bestDist) {
+      bestDist = currentDist;
+      bestOrder = currentOrder;
+      bestFullPath = currentFullPath;
     }
   }
 
-  return { order, totalDistance, fullPath };
+  return { order: bestOrder, totalDistance: bestDist, fullPath: bestFullPath };
 }

@@ -9,10 +9,11 @@ import {
   getAdjacentNodes, getEdgeBetween, computeScore,
 } from '@/utils/graph';
 import {
-  allPairsShortestPaths, greedyDeliveryOrder,
+  allPairsShortestPaths, optimalDeliveryOrder, // <-- CHANGED IMPORT
 } from '@/algorithms/dijkstra';
 
 export function useGame() {
+  // ... (keep state variables and refs exactly the same) ...
   const [phase, setPhase]               = useState<GamePhase>('menu');
   const [difficulty, setDifficulty]     = useState<Difficulty>('easy');
   const [graph, setGraph]               = useState<GameGraph>({ nodes: [], edges: [] });
@@ -26,14 +27,26 @@ export function useGame() {
   const [showOptimal, setShowOptimal]   = useState(false);
   const [message, setMessage]           = useState<string>('');
 
-  // Refs for stale-closure-safe reads inside event handlers
   const optimalRouteRef = useRef<OptimalRoute | null>(null);
   const difficultyRef   = useRef<Difficulty>('easy');
 
   // ── Start a new game ────────────────────────────────────────────────────────
+  // ── Start a new game ────────────────────────────────────────────────────────
   const startGame = useCallback((diff: Difficulty) => {
     const g = getGraphForDifficulty(diff);
-    const pkgs = getPackagesForDifficulty(diff);
+    
+    // Pass 'g' into the function so it picks targets from the cloned nodes
+    const pkgs = getPackagesForDifficulty(diff, g); 
+
+    // DYNAMIC UI FIX:
+    // Update the node types dynamically so the GameCanvas renders 
+    // a "delivery" icon on our new random targets, and "waypoint" dots elsewhere.
+    const destinationIds = pkgs.map(p => p.destination);
+    g.nodes = g.nodes.map(node => ({
+      ...node,
+      type: node.id === 'W' ? 'warehouse' : (destinationIds.includes(node.id) ? 'delivery' : 'waypoint')
+    }));
+
     difficultyRef.current = diff;
     setDifficulty(diff);
     setGraph(g);
@@ -51,27 +64,29 @@ export function useGame() {
     // Pre-compute optimal route (runs Dijkstra from every node)
     const nodeIds = g.nodes.map((n) => n.id);
     const apsp = allPairsShortestPaths(nodeIds, g.edges);
-    const destinations = pkgs.map((p) => p.destination);
-    const greedy = greedyDeliveryOrder('W', destinations, apsp);
+    
+    // Using the exact TSP solver we built previously
+    const optimal = optimalDeliveryOrder('W', pkgs, apsp, false);
 
     const pathDetails = [];
-    for (let i = 0; i < greedy.fullPath.length - 1; i++) {
-      const edge = getEdgeBetween(greedy.fullPath[i], greedy.fullPath[i + 1], g.edges);
+    for (let i = 0; i < optimal.fullPath.length - 1; i++) {
+      const edge = getEdgeBetween(optimal.fullPath[i], optimal.fullPath[i + 1], g.edges);
       pathDetails.push({
-        from: greedy.fullPath[i],
-        to: greedy.fullPath[i + 1],
+        from: optimal.fullPath[i],
+        to: optimal.fullPath[i + 1],
         distance: edge?.weight ?? 0,
       });
     }
 
     const opt: OptimalRoute = {
-      order: greedy.order,
-      totalDistance: greedy.totalDistance,
+      order: optimal.order,
+      totalDistance: optimal.totalDistance,
       pathDetails,
     };
     optimalRouteRef.current = opt;
     setOptimalRoute(opt);
   }, []);
+
 
   // ── Finish game and compute result ──────────────────────────────────────────
   // Uses refs so this is never stale regardless of when it's called

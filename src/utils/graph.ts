@@ -91,17 +91,18 @@ const hardEdges: GameEdge[] = [
   makeEdge('J', 'H', 6),
 ];
 
-// ─── Public API ───────────────────────────────────────────────────────────────
+/// ─── Public API ───────────────────────────────────────────────────────────────
 const GRAPHS: Record<Difficulty, GameGraph> = {
   easy:   { nodes: easyNodes,   edges: easyEdges   },
   medium: { nodes: mediumNodes, edges: mediumEdges  },
   hard:   { nodes: hardNodes,   edges: hardEdges    },
 };
 
-const DELIVERIES: Record<Difficulty, string[]> = {
-  easy:   ['A', 'B', 'D'],
-  medium: ['A', 'B', 'F', 'G'],
-  hard:   ['A', 'B', 'F', 'I', 'K'],
+// Replace the hardcoded DELIVERIES array with counts
+const PACKAGE_COUNTS: Record<Difficulty, number> = {
+  easy:   3,
+  medium: 4,
+  hard:   5,
 };
 
 export function getGraphForDifficulty(difficulty: Difficulty): GameGraph {
@@ -113,18 +114,30 @@ export function getGraphForDifficulty(difficulty: Difficulty): GameGraph {
   };
 }
 
-export function getPackagesForDifficulty(difficulty: Difficulty): DeliveryPackage[] {
-  const graph = GRAPHS[difficulty];
-  return DELIVERIES[difficulty].map((destId, i) => {
-    const node = graph.nodes.find((n) => n.id === destId);
-    return {
-      id: `pkg-${i}`,
-      destination: destId,
-      priority: i === 0 ? 'urgent' : 'normal',
-      delivered: false,
-    } satisfies DeliveryPackage;
-  });
+export function getPackagesForDifficulty(difficulty: Difficulty, currentGraph?: GameGraph): DeliveryPackage[] {
+  // Use the actively cloned graph if provided, otherwise fall back to base
+  const graph = currentGraph ?? GRAPHS[difficulty];
+  const count = PACKAGE_COUNTS[difficulty];
+
+  // 1. Filter out the Warehouse (W) so it's never a delivery target
+  const eligibleNodes = graph.nodes.filter((n) => n.id !== 'W');
+
+  // 2. Randomly shuffle the eligible nodes (Fisher-Yates style sort)
+  const shuffled = [...eligibleNodes].sort(() => 0.5 - Math.random());
+  
+  // 3. Pick the top N nodes based on difficulty
+  const selectedDestinations = shuffled.slice(0, count);
+
+  // 4. Map them to your DeliveryPackage type
+  return selectedDestinations.map((node, i) => ({
+    id: `pkg-${i}`,
+    destination: node.id,
+    priority: i === 0 ? 'urgent' : 'normal',
+    delivered: false,
+  }));
 }
+
+// ... (keep getAdjacentNodes, getEdgeBetween, computePathDistance, computeScore the same)
 
 export function getAdjacentNodes(nodeId: string, edges: GameEdge[]): string[] {
   return edges
