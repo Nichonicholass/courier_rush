@@ -1,0 +1,35 @@
+.wrapper {
+  background: #0a0f1e;
+  border-radius: 12px;
+  border: 1px solid #1e293b;
+  overflow: hidden;
+  flex: 1;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.nodeGroup {
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.nodeGroup:hover circle:not(.pulse) {
+  filter: brightness(1.25);
+}
+
+.disabled .nodeGroup {
+  cursor: default;
+}
+
+@keyframes pulse {
+  0%   { r: 34; opacity: 0.7; }
+  100% { r: 44; opacity: 0; }
+}
+
+.pulse {
+  animation: pulse 1.4s ease-out infinite;
+}
