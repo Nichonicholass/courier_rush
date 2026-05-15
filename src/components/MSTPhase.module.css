@@ -1,0 +1,328 @@
+.container {
+  min-height: 100vh;
+  background: #060b14;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  color: #cbd5e1;
+}
+
+/* ─── Header ──────────────────────────────── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.headerLeft {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.phaseIcon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 1.3rem;
+  font-weight: 900;
+  margin: 0;
+  color: #f0c040;
+}
+
+.subtitle {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0.15rem 0 0;
+  max-width: 480px;
+  line-height: 1.5;
+}
+
+.subtitle strong {
+  color: #34d399;
+}
+
+.headerRight { flex-shrink: 0; }
+
+.algorithmTag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0d1117;
+  border: 1px solid #161f2e;
+  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #34d399;
+}
+
+.tagIcon { font-size: 0.9rem; }
+
+/* ─── Main ────────────────────────────────── */
+.main {
+  display: flex;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.canvasWrap {
+  flex: 1;
+  background: #0a0e18;
+  border-radius: 14px;
+  border: 1px solid #161f2e;
+  overflow: hidden;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.edgeGroup { cursor: pointer; }
+.edgeGroup:hover line:not([stroke="transparent"]) {
+  stroke-width: 5;
+}
+
+/* ─── Side Panel ──────────────────────────── */
+.sidePanel {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.costCard, .selectedList {
+  background: #0d1117;
+  border: 1px solid #161f2e;
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.selectedList {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.cardTitle {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #334155;
+  margin: 0 0 0.6rem;
+}
+
+.costRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0;
+}
+
+.costLabel { font-size: 0.82rem; color: #64748b; }
+
+.costVal {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #cbd5e1;
+  font-variant-numeric: tabular-nums;
+}
+
+.highlight { color: #34d399; font-size: 1.05rem; }
+
+.progressBar {
+  height: 4px;
+  background: #161f2e;
+  border-radius: 2px;
+  margin-top: 0.6rem;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: #34d399;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.emptyText {
+  color: #334155;
+  font-size: 0.82rem;
+  text-align: center;
+  padding: 2rem 0.5rem;
+  margin: 0;
+}
+
+.edgeList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.edgeItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #111820;
+  border: 1px solid #161f2e;
+  border-radius: 8px;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.edgeItem:hover { background: #1a1218; border-color: #7f1d1d; }
+
+.edgeRoute { flex: 1; color: #94a3b8; font-weight: 600; }
+.edgeCost { color: #34d399; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.removeBtn {
+  background: none; border: none; color: #475569;
+  font-size: 0.7rem; cursor: pointer; padding: 0;
+}
+.removeBtn:hover { color: #f87171; }
+
+/* ─── Error ───────────────────────────────── */
+.errorBox {
+  background: rgba(248,113,113,0.06);
+  border: 1px solid #7f1d1d;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.82rem;
+  color: #fca5a5;
+}
+
+/* ─── Controls ────────────────────────────── */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.submitBtn {
+  background: #f0c040;
+  color: #0d1117;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 16px rgba(240,192,64,0.15);
+}
+
+.submitBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(240,192,64,0.3);
+}
+
+.hintBtn, .algoBtn {
+  background: #111820;
+  color: #64748b;
+  border: 1px solid #161f2e;
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  text-align: left;
+}
+
+.hintBtn:hover, .algoBtn:hover { border-color: #334155; color: #94a3b8; }
+
+.hintBtn.active { border-color: #92400e; color: #f59e0b; background: rgba(245,158,11,0.05); }
+.algoBtn.active { border-color: #1e3a5f; color: #60a5fa; background: rgba(96,165,250,0.05); }
+
+.backBtn {
+  background: none;
+  border: 1px solid #161f2e;
+  color: #475569;
+  border-radius: 8px;
+  padding: 0.5rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.backBtn:hover { border-color: #334155; color: #94a3b8; }
+
+/* ─── Algorithm Panel ─────────────────────── */
+.algoPanel {
+  background: #0d1117;
+  border: 1px solid #161f2e;
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+}
+
+.algoPanelHeader h3 {
+  font-size: 0.88rem;
+  margin: 0 0 0.25rem;
+  color: #60a5fa;
+  font-weight: 800;
+}
+
+.algoDesc {
+  font-size: 0.75rem;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0 0 0.75rem;
+}
+
+.algoDesc code {
+  background: #111820;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  color: #a78bfa;
+  font-family: 'Consolas', monospace;
+}
+
+.stepsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.stepRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  background: #0a0e18;
+}
+
+.stepAccepted { border-left: 3px solid #34d399; }
+.stepRejected { border-left: 3px solid #1e293b; }
+
+.stepNum { color: #334155; font-weight: 800; min-width: 18px; font-variant-numeric: tabular-nums; }
+.stepIcon { font-size: 0.8rem; flex-shrink: 0; }
+.stepText { flex: 1; color: #64748b; }
+.stepCost { color: #34d399; font-weight: 800; font-variant-numeric: tabular-nums; flex-shrink: 0; font-size: 0.72rem; }
+
+.algoResult {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: #0a0e18;
+  border-left: 3px solid #34d399;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.82rem;
+  color: #34d399;
+  font-weight: 700;
+}

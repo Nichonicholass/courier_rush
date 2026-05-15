@@ -2,7 +2,7 @@
 import GameCanvas from './GameCanvas';
 import Dashboard from './Dashboard';
 import AlgorithmPanel from './AlgorithmPanel';
-import type { GameGraph, DeliveryPackage, TrafficEvent, OptimalRoute } from '@/types';
+import type { GameGraph, DeliveryPackage, TrafficEvent, OptimalRoute, MSTResult } from '@/types';
 import styles from './GameScreen.module.css';
 
 interface Props {
@@ -16,6 +16,7 @@ interface Props {
   showOptimal: boolean;
   message: string;
   formattedTime: string;
+  mstResult?: MSTResult | null;
   onNodeClick: (id: string) => void;
   onGiveUp: () => void;
   onTriggerEvent: () => void;
@@ -25,7 +26,7 @@ interface Props {
 export default function GameScreen({
   graph, currentNode, playerPath, playerDistance,
   packages, events, optimalRoute, showOptimal,
-  message, formattedTime,
+  message, formattedTime, mstResult,
   onNodeClick, onGiveUp, onTriggerEvent, onShowOptimal,
 }: Props) {
   const optimalPath = optimalRoute?.order ?? [];
@@ -35,6 +36,11 @@ export default function GameScreen({
       {/* Top bar */}
       <div className={styles.topBar}>
         <div className={styles.logo}>🚚 Courier Rush</div>
+        {mstResult && (
+          <div className={styles.mstBadge}>
+            🔧 MST Bonus: +{mstResult.bonusScore} pts ({mstResult.efficiency}%)
+          </div>
+        )}
         <div className={styles.deliveryCount}>
           {packages.filter((p) => p.delivered).length}/{packages.length} Delivered
         </div>

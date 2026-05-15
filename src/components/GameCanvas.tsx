@@ -12,6 +12,7 @@ interface Props {
   packages: DeliveryPackage[];
   onNodeClick: (id: string) => void;
   disabled?: boolean;
+  hideLegend?: boolean;
 }
 
 const SVG_W = 900;
@@ -32,7 +33,7 @@ function buildPathEdgeSet(path: string[]): Set<string> {
 
 export default function GameCanvas({
   graph, currentNode, playerPath, optimalPath,
-  showOptimal, packages, onNodeClick, disabled,
+  showOptimal, packages, onNodeClick, disabled, hideLegend,
 }: Props) {
   const playerEdges  = buildPathEdgeSet(playerPath);
   const optimalEdges = buildPathEdgeSet(optimalPath);
@@ -244,20 +245,22 @@ export default function GameCanvas({
         </g>
 
         {/* ── Legend ── */}
-        <g transform="translate(10, 10)">
-          {[
-            { color: '#60a5fa', label: 'Your route' },
-            { color: '#22c55e', label: 'Optimal route' },
-            { color: '#a78bfa', label: 'Overlap' },
-            { color: '#ef4444', label: 'Blocked' },
-            { color: '#f97316', label: 'Slow traffic' },
-          ].map(({ color, label }, i) => (
-            <g key={label} transform={`translate(0, ${i * 20})`}>
-              <rect width={16} height={5} y={4} rx={2} fill={color} />
-              <text x={22} y={12} fontSize={10} fill="#94a3b8">{label}</text>
-            </g>
-          ))}
-        </g>
+        {!hideLegend && (
+          <g transform="translate(10, 10)">
+            {[
+              { color: '#60a5fa', label: 'Your route' },
+              { color: '#22c55e', label: 'Optimal route' },
+              { color: '#a78bfa', label: 'Overlap' },
+              { color: '#ef4444', label: 'Blocked' },
+              { color: '#f97316', label: 'Slow traffic' },
+            ].map(({ color, label }, i) => (
+              <g key={label} transform={`translate(0, ${i * 20})`}>
+                <rect width={16} height={5} y={4} rx={2} fill={color} />
+                <text x={22} y={12} fontSize={10} fill="#94a3b8">{label}</text>
+              </g>
+            ))}
+          </g>
+        )}
       </svg>
     </div>
   );

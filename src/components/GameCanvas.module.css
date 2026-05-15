@@ -1,7 +1,7 @@
 .wrapper {
-  background: #0a0f1e;
-  border-radius: 12px;
-  border: 1px solid #1e293b;
+  background: #0a0e18;
+  border-radius: 14px;
+  border: 1px solid #161f2e;
   overflow: hidden;
   flex: 1;
 }
@@ -18,7 +18,7 @@
 }
 
 .nodeGroup:hover circle:not(.pulse) {
-  filter: brightness(1.25);
+  filter: brightness(1.2);
 }
 
 .disabled .nodeGroup {
@@ -26,7 +26,7 @@
 }
 
 @keyframes pulse {
-  0%   { r: 34; opacity: 0.7; }
+  0%   { r: 34; opacity: 0.6; }
   100% { r: 44; opacity: 0; }
 }
 

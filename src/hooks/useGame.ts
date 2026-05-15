@@ -1,22 +1,29 @@
-'use client';
 import { useState, useCallback, useRef } from 'react';
-import type {
-  Difficulty, GamePhase, GameGraph, DeliveryPackage,
-  TrafficEvent, GameResult, OptimalRoute,
-} from '@/types';
 import {
-  getGraphForDifficulty, getPackagesForDifficulty,
-  getAdjacentNodes, getEdgeBetween, computeScore,
+  getGraphForDifficulty,
+  getPackagesForDifficulty,
+  getAdjacentNodes,
+  getEdgeBetween,
+  computeScore,
 } from '@/utils/graph';
-import {
-  allPairsShortestPaths, optimalDeliveryOrder, // <-- CHANGED IMPORT
-} from '@/algorithms/dijkstra';
+import { allPairsShortestPaths, optimalDeliveryOrder } from '@/algorithms/dijkstra';
+import type {
+  Difficulty,
+  GamePhase,
+  GameGraph,
+  DeliveryPackage,
+  TrafficEvent,
+  GameResult,
+  OptimalRoute,
+  MSTResult,
+} from '@/types';
+
+const EMPTY_GRAPH: GameGraph = { nodes: [], edges: [] };
 
 export function useGame() {
-  // ... (keep state variables and refs exactly the same) ...
   const [phase, setPhase]               = useState<GamePhase>('menu');
   const [difficulty, setDifficulty]     = useState<Difficulty>('easy');
-  const [graph, setGraph]               = useState<GameGraph>({ nodes: [], edges: [] });
+  const [graph, setGraph]               = useState<GameGraph>(EMPTY_GRAPH);
   const [packages, setPackages]         = useState<DeliveryPackage[]>([]);
   const [currentNode, setCurrentNode]   = useState<string>('W');
   const [playerPath, setPlayerPath]     = useState<string[]>(['W']);
@@ -29,26 +36,28 @@ export function useGame() {
 
   const optimalRouteRef = useRef<OptimalRoute | null>(null);
   const difficultyRef   = useRef<Difficulty>('easy');
+  const mstResultRef    = useRef<MSTResult | null>(null);
 
-  // ── Start a new game ────────────────────────────────────────────────────────
-  // ── Start a new game ────────────────────────────────────────────────────────
-  const startGame = useCallback((diff: Difficulty) => {
+  // 🆕 Initialize graph and enter MST phase
+  const initGraph = useCallback((diff: Difficulty) => {
     const g = getGraphForDifficulty(diff);
-    
-    // Pass 'g' into the function so it picks targets from the cloned nodes
-    const pkgs = getPackagesForDifficulty(diff, g); 
+    difficultyRef.current = diff;
+    setDifficulty(diff);
+    setGraph(g);
+    setPhase('mst');
+  }, []);
 
-    // DYNAMIC UI FIX:
-    // Update the node types dynamically so the GameCanvas renders 
-    // a "delivery" icon on our new random targets, and "waypoint" dots elsewhere.
+  // Helper: set up game state after graph is ready
+  const setupGame = useCallback((g: GameGraph, diff: Difficulty) => {
+    const pkgs = getPackagesForDifficulty(diff, g);
+
+    // Update node types for delivery targets
     const destinationIds = pkgs.map(p => p.destination);
     g.nodes = g.nodes.map(node => ({
       ...node,
       type: node.id === 'W' ? 'warehouse' : (destinationIds.includes(node.id) ? 'delivery' : 'waypoint')
     }));
 
-    difficultyRef.current = diff;
-    setDifficulty(diff);
     setGraph(g);
     setPackages(pkgs);
     setCurrentNode('W');
@@ -61,11 +70,9 @@ export function useGame() {
     setMessage('');
     setPhase('playing');
 
-    // Pre-compute optimal route (runs Dijkstra from every node)
+    // Pre-compute optimal route
     const nodeIds = g.nodes.map((n) => n.id);
     const apsp = allPairsShortestPaths(nodeIds, g.edges);
-    
-    // Using the exact TSP solver we built previously
     const optimal = optimalDeliveryOrder('W', pkgs, apsp, false);
 
     const pathDetails = [];
@@ -87,9 +94,30 @@ export function useGame() {
     setOptimalRoute(opt);
   }, []);
 
+  // 🆕 Start game AFTER MST phase completion
+  const startGameAfterMST = useCallback((mstRes: MSTResult) => {
+    mstResultRef.current = mstRes;
+    const g = getGraphForDifficulty(difficultyRef.current);
+    setupGame(g, difficultyRef.current);
+  }, [setupGame]);
 
-  // ── Finish game and compute result ──────────────────────────────────────────
-  // Uses refs so this is never stale regardless of when it's called
+  // 🆕 Skip MST and start directly
+  const startGameSkipMST = useCallback(() => {
+    mstResultRef.current = null;
+    const g = getGraphForDifficulty(difficultyRef.current);
+    setupGame(g, difficultyRef.current);
+  }, [setupGame]);
+
+  // 🔧 Legacy start (kept for compatibility)
+  const startGame = useCallback((diff: Difficulty) => {
+    difficultyRef.current = diff;
+    setDifficulty(diff);
+    mstResultRef.current = null;
+    const g = getGraphForDifficulty(diff);
+    setupGame(g, diff);
+  }, [setupGame]);
+
+  // 🏁 Finish game and compute result
   const finishGame = useCallback((
     path: string[],
     distance: number,
@@ -99,23 +127,31 @@ export function useGame() {
   ) => {
     const optimal = optimalRouteRef.current ?? { order: [], totalDistance: distance, pathDetails: [] };
     const efficiency = (optimal.totalDistance / Math.max(distance, 1)) * 100;
-    const score = computeScore(distance, optimal.totalDistance, elapsed, allDelivered);
+
+    let baseScore = computeScore(distance, optimal.totalDistance, elapsed, allDelivered);
+
+    // Add MST bonus if available
+    const mstRes = mstResultRef.current;
+    const mstBonus = mstRes ? mstRes.bonusScore : 0;
+    const totalScore = Math.min(1200, baseScore + mstBonus);
 
     setResult({
       playerPath: path,
       playerDistance: distance,
       optimalRoute: optimal,
       efficiency,
-      score,
+      score: totalScore,
       timeElapsed: elapsed,
       difficulty: difficultyRef.current,
       allDelivered,
+      mstBonus,
+      mstEfficiency: mstRes?.efficiency,
     });
     setShowOptimal(true);
     setPhase('result');
   }, []);
 
-  // ── Player moves to adjacent node ───────────────────────────────────────────
+  // 🚗 Player moves to adjacent node
   const moveToNode = useCallback((targetId: string, elapsed: number) => {
     if (phase !== 'playing') return;
 
@@ -153,12 +189,12 @@ export function useGame() {
     }
   }, [phase, currentNode, graph.edges, playerPath, playerDistance, packages, finishGame]);
 
-  // ── Give up / finish early ──────────────────────────────────────────────────
+  // 🏳️ Give up / finish early
   const giveUp = useCallback((elapsed: number) => {
     finishGame(playerPath, playerDistance, elapsed, packages, false);
   }, [finishGame, playerPath, playerDistance, packages]);
 
-  // ── Traffic event (random road block / slow) ────────────────────────────────
+  // 🚦 Traffic event
   const triggerRandomEvent = useCallback(() => {
     if (graph.edges.length === 0) return;
     const eligible = graph.edges.filter(
@@ -175,8 +211,8 @@ export function useGame() {
       edgeId: edge.id,
       type: isBlock ? 'blocked' : 'slow',
       message: isBlock
-        ? `🚧 Road ${edge.from}↔${edge.to} is BLOCKED! Find another route.`
-        : `🐌 Road ${edge.from}↔${edge.to} has heavy traffic (×2 cost).`,
+        ? `🚧 Road ${edge.from}→${edge.to} is BLOCKED! Find another route.`
+        : `🐌 Road ${edge.from}→${edge.to} has heavy traffic (×2 cost).`,
       duration,
       remainingTime: duration,
     };
@@ -198,7 +234,7 @@ export function useGame() {
         ),
       }));
       setEvents((prev) => prev.filter((ev) => ev.id !== event.id));
-      setMessage('✅ Road cleared!');
+      setMessage('🟢 Road cleared!');
       setTimeout(() => setMessage(''), 2000);
     }, duration);
   }, [graph.edges]);
@@ -214,7 +250,8 @@ export function useGame() {
     phase, difficulty, graph, packages, currentNode,
     playerPath, playerDistance, events, result, optimalRoute,
     showOptimal, message,
-    startGame, moveToNode, giveUp, triggerRandomEvent, goToMenu,
+    initGraph, startGame, startGameAfterMST, startGameSkipMST,
+    moveToNode, giveUp, triggerRandomEvent, goToMenu,
     toggleShowOptimal, setPhase,
   };
 }

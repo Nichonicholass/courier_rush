@@ -1,5 +1,5 @@
 export type Difficulty = 'easy' | 'medium' | 'hard';
-export type GamePhase = 'menu' | 'difficulty' | 'playing' | 'result';
+export type GamePhase = 'menu' | 'difficulty' | 'mst' | 'playing' | 'result';
 export type NodeType = 'warehouse' | 'delivery' | 'waypoint';
 export type PackagePriority = 'normal' | 'urgent';
 export type TrafficEventType = 'blocked' | 'slow';
@@ -63,6 +63,9 @@ export interface GameResult {
   timeElapsed: number;
   difficulty: Difficulty;
   allDelivered: boolean;
+  // MST bonus data
+  mstBonus?: number;
+  mstEfficiency?: number;
 }
 
 export interface LeaderboardEntry {
@@ -80,4 +83,14 @@ export interface DijkstraStep {
   visited: string[];
   distances: Record<string, number>;
   description: string;
+}
+
+// ─── MST Phase Types ────────────────────────────────────────────────
+export interface MSTResult {
+  playerEdgeIds: string[];
+  playerCost: number;
+  optimalCost: number;
+  efficiency: number;
+  isValid: boolean;
+  bonusScore: number;
 }
