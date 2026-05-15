@@ -62,10 +62,7 @@ Used in the *Delivery Phase*.
 
 ---
 
-## Contributors (Team)
 
-* **Dustin** : Redesigned the entire user interface, implemented Kruskal's Minimum Spanning Tree (MST) algorithm, and added visual route comparisons and background music.
-* 
 
 ---
 *Created for PAA/DAA Quiz 2 Evaluation.*
