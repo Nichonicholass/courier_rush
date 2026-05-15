@@ -4,7 +4,7 @@ A browser-based graph simulation and delivery game that brings **Kruskal's Minim
 
 ---
 
-## 🎮 What Is This?
+## What Is This?
 
 **Courier Rush** is a game divided into two exciting graph-based phases:
 
@@ -18,7 +18,7 @@ At the end of the game, the **Result Screen** will display a side-by-side visual
 
 ---
 
-## ✨ Features
+## Features
 
 - **Dual Graph Algorithms:** Fully implements Kruskal's (DSU/Union-Find) and Dijkstra's (Priority/Distance mapping) algorithms under the hood.
 - **Interactive Visualizations:** Node and edge clicking, dynamic SVG map highlighting, and smooth courier animations.
@@ -28,7 +28,7 @@ At the end of the game, the **Result Screen** will display a side-by-side visual
 
 ---
 
-## 🧠 Algorithms Explained
+## Algorithms Explained
 
 ### 1. Kruskal's Minimum Spanning Tree (MST)
 Used in the *Road Repair Phase*.
@@ -42,7 +42,7 @@ Used in the *Delivery Phase*.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Framework:** Next.js 15 (React 18)
 - **Styling:** CSS Modules with modern flexbox/grid architectures.
@@ -51,7 +51,7 @@ Used in the *Delivery Phase*.
 
 ---
 
-## 🚀 How to Run Locally
+## How to Run Locally
 
 1. Clone this repository.
 2. Ensure you have Node.js installed.
@@ -62,10 +62,10 @@ Used in the *Delivery Phase*.
 
 ---
 
-## 👥 Contributors (Team)
+## Contributors (Team)
 
 * **Dustin** : Redesigned the entire user interface, implemented Kruskal's Minimum Spanning Tree (MST) algorithm, and added visual route comparisons and background music.
-* *(Add other team members here)*
+* 
 
 ---
 *Created for PAA/DAA Quiz 2 Evaluation.*
